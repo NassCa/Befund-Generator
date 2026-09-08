@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#17262a">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Befund">
+<meta name="application-name" content="Befund">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Psychopathologischer Befund</title>
+<style>
+:root{
+  --bg:#eef1f0;
+  --surface:#ffffff;
+  --surface-sunk:#f6f8f7;
+  --ink:#17262a;
+  --ink-soft:#5c6f72;
+  --line:#d5dedc;
+  --line-strong:#b6c4c1;
+  --accent:#0f6157;
+  --accent-soft:#e2efec;
+  --warn:#8a4a12;
+  --warn-soft:#fdf3e7;
+  --danger:#96262a;
+  --danger-soft:#fbecec;
+  --focus:#1b7f72;
+  --radius:4px;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --doc:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--ui);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--ink);color:#f2f6f5;padding:10px 18px}
+header h1{font-size:15px;font-weight:600;letter-spacing:.01em}
+header .sub{font-size:12px;color:#9db1b1}
+header .spacer{flex:1}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap}
+.tbtn{background:transparent;color:#dfe9e7;border:1px solid #3d5257;border-radius:var(--radius);
+  padding:5px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.tbtn:hover{background:#26383c;border-color:#5d777c}
+.tbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.tbtn.primary:hover{background:#0c4f47}
+.tbtn[aria-pressed="true"]{background:#26383c;border-color:#5d777c;color:#fff;font-weight:600}
+.tbtn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,
+.pill:focus-visible,.tab:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:calc(100% - 44px)}
+.col{overflow-y:auto;padding:14px 16px 60px}
+.col-out{background:var(--surface);border-left:1px solid var(--line-strong)}
+
+section.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px}
+section.card>h2{font-size:13px;font-weight:600;padding:9px 12px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;border-bottom:1px solid transparent}
+section.card.open>h2{border-bottom-color:var(--line)}
+section.card>h2 .idx{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700;min-width:22px}
+section.card>h2 .chev{margin-left:auto;color:var(--ink-soft);font-size:11px;transition:transform .15s}
+section.card.open>h2 .chev{transform:rotate(90deg)}
+section.card .body{display:none;padding:4px 12px 14px}
+section.card.open .body{display:block}
+.count{display:inline-block;min-width:16px;padding:0 4px;border-radius:9px;background:var(--accent-soft);
+  color:var(--accent);font-size:11px;font-weight:600;text-align:center}
+.count.alert{background:var(--danger-soft);color:var(--danger)}
+.hint{font-size:12px;color:var(--ink-soft);margin:6px 0 2px}
+.clusterhead{font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--ink-soft);
+  margin:16px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--line-strong)}
+.clusterhead:first-child{margin-top:0}
+
+label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin:10px 0 3px}
+input[type=text],input[type=date],textarea,select{width:100%;padding:6px 8px;border:1px solid var(--line-strong);
+  border-radius:var(--radius);font:inherit;font-size:13px;background:var(--surface-sunk);color:var(--ink);resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;align-items:center}
+.pill{padding:4px 10px;border-radius:20px;border:1px solid var(--line-strong);background:var(--surface);
+  color:var(--ink-soft);cursor:pointer;font-size:12.5px;user-select:none;font-family:inherit}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.pill.risk{border-color:#d8b3b4;color:var(--danger)}
+.pill.risk:hover{background:var(--danger-soft)}
+.pill.risk[aria-pressed="true"]{background:var(--danger);border-color:var(--danger);color:#fff}
+.pill .alt{font-size:10.5px;opacity:.75;margin-left:4px}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line-strong);margin-bottom:12px;flex-wrap:wrap}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:7px 10px;
+  font:inherit;font-size:12.5px;color:var(--ink-soft);cursor:pointer}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.pane{display:none}
+.pane.on{display:block}
+
+.doc{font-family:var(--doc);font-size:14.5px;line-height:1.62;color:var(--ink)}
+.doc h3{font-family:var(--ui);font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--accent);margin:18px 0 5px}
+.doc h3:first-child{margin-top:0}
+.doc p{margin-bottom:7px}
+.doc .empty{color:#9aa9ab;font-style:italic}
+.doc ul{margin:0 0 8px 20px}
+.doc li{margin-bottom:3px}
+.meterwrap{display:flex;align-items:center;gap:9px;margin-bottom:12px;font-size:12px;color:var(--ink-soft)}
+.meter{flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.meter span{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+
+.note{border-left:3px solid var(--line-strong);background:var(--surface-sunk);padding:9px 11px;
+  border-radius:0 var(--radius) var(--radius) 0;margin-bottom:9px;font-size:13px}
+.note.risk{border-left-color:var(--danger);background:var(--danger-soft)}
+.note.flag{border-left-color:var(--warn);background:var(--warn-soft)}
+.note b{display:block;font-size:12px;margin-bottom:2px}
+.note.risk b{color:var(--danger)}
+.note.flag b{color:var(--warn)}
+.foot{margin-top:26px;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-soft)}
+.foot a{color:var(--accent);word-break:break-word}
+.foot p+p{margin-top:6px}
+
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:9px 16px;border-radius:var(--radius);font-size:13px;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (pointer:coarse){
+  input[type=text],input[type=date],textarea,select{font-size:16px}
+  .pill,.lvl{padding:7px 13px;font-size:13.5px}
+  .lvl{min-width:40px}
+  .ib{width:26px;height:26px}
+  .tbtn{padding:8px 12px}
+  .chk input{width:20px;height:20px}
+}
+@media (max-width:920px){
+  .layout{grid-template-columns:1fr;height:auto}
+  .col{overflow:visible;height:auto}
+  .col-out{border-left:none;border-top:1px solid var(--line-strong)}
+  body,html{height:auto}
+  .row{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  header,.col:first-child,.tabs,.meterwrap,.toast{display:none!important}
+  body{background:#fff}
+  .layout{display:block;height:auto}
+  .col-out{border:none;padding:0}
+  .pane{display:block!important;page-break-inside:avoid}
+  .pane+.pane{margin-top:18px}
+}
+
+.scale{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:6px 0}
+.scale .n{flex:1 1 170px;font-size:12.5px}
+.lvl{padding:3px 8px;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);
+  color:var(--ink-soft);font:inherit;font-size:11.5px;cursor:pointer;min-width:28px}
+.lvl:hover{border-color:var(--accent);color:var(--accent)}
+.lvl[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.ib{border:1px solid var(--line-strong);background:var(--surface);color:var(--accent);border-radius:50%;
+  width:20px;height:20px;font:inherit;font-size:11px;font-weight:700;cursor:pointer;line-height:1;flex:0 0 auto}
+.ib:hover{background:var(--accent-soft)}
+.ib[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.grplabel{font-size:12px;font-weight:600;color:var(--ink-soft);margin:10px 0 3px}
+.defbox:empty{display:none}
+.defbox{margin-top:9px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Psychopathologischer Befund</h1>
+  <span class="sub">PPB3-Systematik &middot; lokal im Browser, keine Speicherung</span>
+  <span class="spacer"></span>
+  <div class="toolbar">
+    <button class="tbtn primary" id="btnCopy" type="button">Text kopieren</button>
+    <button class="tbtn" id="btnLeer" type="button" aria-pressed="false">Leere Kategorien mitgeben</button>
+    <button class="tbtn" id="btnAlle" type="button" aria-pressed="false">Alle Karten öffnen</button>
+    <button class="tbtn" id="btnInstall" type="button" hidden>App installieren</button>
+    <button class="tbtn" id="btnPrint" type="button">Drucken</button>
+    <button class="tbtn" id="btnReset" type="button">Leeren</button>
+  </div>
+</header>
+
+<div class="layout">
+
+<div class="col" id="colIn">
+  <section class="card open">
+    <h2><span class="idx">0</span>Kopfdaten<span class="chev">&#9654;</span></h2>
+    <div class="body">
+      <p class="hint">Kein Klarname, kein Geburtsdatum. Chiffre oder Pat.-ID verwenden.</p>
+      <div class="row">
+        <div><label for="pid">Untersuchte Person / Pat.-ID</label>
+          <input type="text" id="pid" placeholder="z. B. A-14"></div>
+        <div><label for="datum">Datum</label><input type="date" id="datum"></div>
+      </div>
+      <label for="von">Untersuchung durchgeführt von</label>
+      <input type="text" id="von">
+    </div>
+  </section>
+  <div id="app"></div>
+</div>
+
+<div class="col col-out">
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-pane="doc" aria-selected="true">Befundtext</button>
+    <button class="tab" role="tab" data-pane="liste" aria-selected="false">Liste</button>
+  </div>
+  <div class="meterwrap"><span id="mtxt"></span><span class="meter"><span id="mbar"></span></span></div>
+
+  <div class="pane on" id="pane-doc"><div class="doc" id="docOut"></div></div>
+  <div class="pane" id="pane-liste"><div class="doc" id="listeOut"></div></div>
+
+  <div class="foot">
+    <p>Lexembestand und Systematik nach der Dokumentationskarte „Psychopathologischer Befund 3.0“
+    (Version 2025.02) &copy; 2025 Dr. Benjamin Ochs, <a href="https://ppb3.de">https://ppb3.de</a>,
+    lizenziert unter <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+    Diese Anwendung ist eine Bearbeitung und steht deshalb ebenfalls unter CC BY-SA 4.0.
+    Die Skalenstufen sind hier als leicht, deutlich und hochgradig ausformuliert; die Karte nutzt Pfeilsymbole.</p>
+    <p>Die über „i“ abrufbaren Kurzdefinitionen sind eigene Formulierungen auf Grundlage der
+    psychopathologischen Standardliteratur und nicht Bestandteil der PPB3-Klassifikation. Herangezogen
+    wurden: AMDP, Das AMDP-System, Manual zur Dokumentation psychiatrischer Befunde, Hogrefe, aktuelle
+    Auflage; Fähndrich &amp; Stieglitz, Leitfaden zur Erfassung des psychopathologischen Befundes,
+    6. Auflage, Hogrefe 2023; Scharfetter, Allgemeine Psychopathologie, Thieme. Eine Zuordnung einzelner
+    Definitionen zu genau einem Werk erfolgt bewusst nicht, da die Begriffe in diesen Werken parallel
+    geführt werden; zum verbindlichen Nachschlagen dienen die genannten Manuale.</p>
+    <p>Orange hinterlegte Kästen kennzeichnen zwei Sonderfälle: Begriffe, die als Prägung des PPB3 dort
+    verbindlich definiert sind, und Begriffe, deren Verwendung in der Literatur uneinheitlich ist.</p>
+    <p>Installierbar als App: unter Windows über „App installieren“ in der Werkzeugleiste oder das
+    Browsermenü von Chrome und Edge, unter iOS in Safari über Teilen und „Zum Home-Bildschirm“.
+    Für den Betrieb ohne Netz liegt neben dieser Datei die Datei sw-befund.js; ohne sie funktioniert
+    die Anwendung ebenfalls, nur ohne garantierten Offline-Cache. Beides setzt Auslieferung über
+    HTTPS voraus, etwa GitHub Pages; beim Öffnen als lokale Datei entfällt die Installation.</p>
+    <p>U bedeutet unauffällig. Die Textausgabe ersetzt weder Erhebung noch fachliche Beurteilung.</p>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const G = {1:"leicht", 2:"deutlich", 3:"hochgradig"};
+
+// Kurzdefinitionen zu allen Lexemen. Eigene Formulierungen auf Grundlage der
+// psychopathologischen Standardliteratur (Quellen siehe Fußzeile).
+// Zweiter Eintrag "P": Begriff ist eine Prägung des PPB3 und dort verbindlich definiert.
+// Zweiter Eintrag "U": Begriffsverwendung in der Literatur uneinheitlich.
+const DEF = {
+"wach":["Voll geöffnete Vigilanz, prompte und anhaltende Zuwendung zur Untersuchungssituation."],
+"schläfrig":["Vigilanz herabgesetzt, die Person ist leicht weckbar und bleibt bei Ansprache zugewandt."],
+"somnolent":["Abnorme Schläfrigkeit, durch Ansprache erweckbar, sinkt ohne Reiz wieder ab."],
+"soporös":["Nur durch starke Reize kurz erweckbar, keine geordnete verbale Reaktion."],
+"komatös":["Bewusstlosigkeit ohne Erweckbarkeit, Reaktionen allenfalls reflektorisch."],
+"bewusstseinsklar":["Bewusstseinslage ungestört in Wachheit, Klarheit und Umfang."],
+"bewusstseinsgetrübt":["Zusammenhang des Erlebens ist gestört: Wahrnehmen, Denken und Handeln greifen nicht mehr geordnet ineinander."],
+"bewusstseinsgesteigert":["Erlebnisintensität und Wachheit sind über das gewöhnliche Maß hinaus verschoben."],
+"bewusstseinseingeengt":["Bewusstseinsumfang ist auf wenige Inhalte oder Themen verengt, die Ansprechbarkeit für anderes ist reduziert."],
+"zeitliche Orientierung":["Zurechtfinden in Tageszeit, Datum, Wochentag, Monat und Jahr."],
+"örtliche Orientierung":["Wissen um den aktuellen Aufenthaltsort und dessen Einordnung."],
+"situative Orientierung":["Erfassen, in welcher Situation und in welchem Zusammenhang man sich befindet."],
+"autopersonelle Orientierung":["Wissen um die eigene Person und die eigene Lebensgeschichte."],
+"Konzentration":["Fähigkeit, die Aufmerksamkeit über eine Zeitspanne auf eine Tätigkeit gerichtet zu halten."],
+"Kurzzeitgedächtnis":["Behalten neuer Information über Sekunden bis Minuten; klinisch über unmittelbares Wiedergeben und verzögertes Abrufen geprüft."],
+"Langzeitgedächtnis":["Verfügbarkeit länger zurückliegender Inhalte, biografisch wie allgemein."],
+"Amnesie":["Zeitlich oder inhaltlich umschriebene Erinnerungslücke."],
+"Zeitgitterstörung":["Erinnerte Inhalte bleiben verfügbar, ihre zeitliche Einordnung und Abfolge stimmt nicht."],
+"Erinnerungstäuschung":["Erinnerungsinhalt wird verändert oder neu gebildet erlebt. Déjà-vu: Neues wirkt vertraut. False-memory: subjektiv sichere Erinnerung an ein so nicht eingetretenes Ereignis."],
+"Intrusionen":["Sich aufdrängende, unwillkürlich einschießende Erinnerungsbilder, oft mit Hier-und-Jetzt-Qualität. Der Realitätsbezug bleibt erhalten, anders als bei Halluzinationen."],
+"Konfabulationen":["Erinnerungslücken werden unwillkürlich mit erfundenen Inhalten gefüllt, ohne Täuschungsabsicht."],
+"Auffassung":["Fähigkeit, Wahrnehmungen und Äußerungen in ihrer Bedeutung zu erfassen und zu verknüpfen."],
+"Abstraktion":["Fähigkeit, vom Konkreten zu lösen und Allgemeines zu bilden, etwa beim Erklären von Sprichwörtern."],
+"Denkgeschwindigkeit":["Tempo des Gedankenablaufs, verlangsamt bis beschleunigt."],
+"Einfalls- und Assoziationsreichtum":["Umfang und Vielfalt der gedanklichen Einfälle und Verknüpfungen."],
+"kohärent":["Gedankengang bleibt zusammenhängend und für den Zuhörer nachvollziehbar."],
+"paralogisch":["Denken folgt einer eigenen, von außen nicht nachvollziehbaren Logik, bleibt sprachlich aber geordnet."],
+"inkohärent":["Zusammenhang zerfällt; Sätze und Satzteile stehen unverbunden nebeneinander."],
+"Schizophasie":["Sprachproduktion bleibt flüssig und grammatikalisch geformt, verliert aber jeden verständlichen Inhalt."],
+"assoziativ gelockert":["Gedankliche Verknüpfungen werden weit und sprunghaft, der rote Faden lockert sich, ohne ganz zu reißen."],
+"sprunghaft":["Rascher Themenwechsel; der Gedankengang springt, bleibt aber in Teilen nachvollziehbar."],
+"Vorbeireden":["Auf eine verstandene Frage folgt eine inhaltlich danebenliegende Antwort."],
+"weitschweifig":["Nebensächliches wird ausgebreitet, das Ziel des Gedankens wird erst spät oder gar nicht erreicht."],
+"perseverierend":["Einzelne Wörter, Vorstellungen oder Themen werden festgehalten und wiederholt, obwohl der Kontext gewechselt hat."],
+"Grübeln":["Kreisende, unproduktive Beschäftigung mit meist unangenehmen Themen ohne Lösungsfortschritt."],
+"eingeengt":["Das Denken bleibt auf wenige Themen beschränkt, andere Inhalte sind kaum zugänglich."],
+"Gedankenabreißen":["Der Gedankengang bricht mitten im Satz unvermittelt ab, subjektiv oft als Sperrung erlebt."],
+"inhaltsleer":["Sprachlich geformte Äußerungen ohne fassbaren Inhalt, vage oder floskelhaft."],
+"Neologismen":["Wortneubildungen außerhalb des allgemeinen Sprachgebrauchs, für den Zuhörer nicht ohne Weiteres verständlich."],
+"psychomotorische Geschwindigkeit":["Tempo von Bewegung, Mimik, Gestik und Sprechen."],
+"ausdrucksarm":["Mimik und Gestik sind vermindert, das Ausdrucksspektrum ist eingeengt."],
+"expressiv":["Ausdruck ist lebhaft gesteigert, Mimik und Gestik sind ausladend."],
+"angespannt":["Erhöhte muskuläre und innere Spannung, sichtbar an Haltung, Mimik und Bewegung."],
+"weinend":["Weinen in der Untersuchungssituation, bis hin zu leichter Auslösbarkeit."],
+"ambitendent":["Gegensätzliche Handlungsimpulse bestehen gleichzeitig und blockieren einander auf der Handlungsebene."],
+"unruhig":["Gesteigerte, ungerichtete motorische Aktivität bis hin zur Agitiertheit."],
+"wirkt abgelenkt":["Die Aufmerksamkeit wird sichtbar von Nebenreizen oder innerem Erleben abgezogen."],
+"Tics":["Unwillkürliche, rasche, wiederkehrende Bewegungen oder Lautäußerungen, kurzzeitig unterdrückbar."],
+"Manierismen":["Alltägliche Bewegungen oder Sprechweisen wirken verschnörkelt und gekünstelt, bleiben aber zielgerichtet."],
+"Verbigerationen":["Sprachliche Stereotypie: Wörter oder Satzfragmente werden monoton wiederholt."],
+"Stereotypien":["Gleichförmige Bewegungen, Haltungen oder Äußerungen ohne erkennbaren Zweck."],
+"Stupor":["Weitgehende Aufhebung von Bewegung und Sprache bei wachem Bewusstsein."],
+"ungepflegt":["Körperpflege und Kleidung sind erkennbar vernachlässigt."],
+"für die Umgebung unpassend gekleidet":["Kleidung passt nicht zu Anlass, Jahreszeit oder sozialem Rahmen."],
+"Sprachbarriere":["Verständigung ist durch begrenzte gemeinsame Sprache eingeschränkt; Befundaussagen sind entsprechend vorsichtig zu treffen."],
+"Logorrhö":["Vermehrter, schwer unterbrechbarer Redefluss."],
+"freundlich":["Zugewandte, wohlwollende Grundhaltung im Kontakt."],
+"zugewandt":["Aufmerksamkeit und Körperhaltung sind auf das Gegenüber gerichtet, der Kontakt kommt zustande."],
+"angepasst":["Verhalten entspricht den Erwartungen der Situation, ohne auffällige Über- oder Unteranpassung."],
+"fassadär":["Das Auftreten wirkt geglättet und wenig authentisch, Beschwerden werden abgeschwächt oder überspielt. Beschreibt den Eindruck, nicht eine unterstellte Absicht."],
+"Pseudologien":["Erfundene Angaben werden zweckgerichtet und ausgestaltet vorgebracht. Simulation meint das Erfinden nicht vorhandener Symptome, Aggravation das Übertreiben vorhandener."],
+"klagsam":["Anhaltendes Klagen über Beschwerden und Belastungen, häufig mit appellativem Zug."],
+"überangepasst":["Eigene Bedürfnisse werden zurückgestellt, das Verhalten ist unterwürfig auf Zustimmung ausgerichtet."],
+"theatralisch":["Ausdruck und Schilderung wirken überzeichnet und auf Wirkung angelegt."],
+"überkontrolliert":["Ausdruck und Verhalten wirken steif, maskenhaft und stark reguliert."],
+"leutselig":["Betont jovial-vertrauliches Auftreten mit Neigung zur Selbstüberhöhung."],
+"distanzgemindert":["Übliche soziale Distanz wird unterschritten, in Ansprache, Nähe oder Themenwahl."],
+"herablassend":["Das Gegenüber wird abwertend oder von oben herab behandelt."],
+"fordernd":["Ansprüche werden nachdrücklich und wenig verhandelbar vorgetragen."],
+"initial freundlich, bei Wunschversagen fordernd und unfreundlich":["Der Kontakt kippt, sobald Wünsche nicht erfüllt werden; beschreibt den Verlauf, nicht eine Zuschreibung an die Person."],
+"abweisend":["Kühl-distanziertes Verhalten, Kontaktangebote werden zurückgewiesen."],
+"bedrohlich":["Auftreten wirkt einschüchternd; Gestik, Stimme oder Äußerungen erzeugen Bedrohungsgefühl."],
+"misstrauisch":["Absichten anderer werden argwöhnisch geprüft, Auskünfte zurückgehalten."],
+"oppositionell":["Anhaltende Gegenhaltung gegenüber Vorschlägen und Anforderungen."],
+"feindselig":["Ablehnende bis gehässige Grundhaltung gegenüber dem Gegenüber."],
+"eigentümlich":["Auftreten wirkt fremdartig oder schwer einzuordnen, ohne dass ein spezifischeres Merkmal zutrifft."],
+"läppisch":["Unangemessen kindlich-alberner Ausdruck bei ernstem Gesprächsinhalt."],
+"schüchtern":["Zurückhaltung und Unsicherheit im Kontakt, verminderter Blickkontakt."],
+"teilnahmslos":["Geringe innere Beteiligung, der Kontakt bleibt blass und unbewegt."],
+"ausweichend":["Fragen werden umgangen, Angaben bleiben unbestimmt."],
+"kein intuitives Gespür für angemessenen kommunikativen Umgang":["Passung von Nähe, Ton und Themenwahl gelingt nicht spontan, sondern muss erschlossen werden.","P"],
+"soziopragmatische Agnosie":["Fehlende Antizipation von Rolle, Beziehung und Vorinformationen des Gegenübers. Verbindliche Definition in der PPB3-Klassifikation.","P"],
+"Hunger und Appetit":["Appetitempfinden und Nahrungsaufnahme, vermindert bis gesteigert."],
+"Libido":["Sexuelles Verlangen, vermindert bis gesteigert."],
+"Schlaf":["Schlafdauer und Schlafkontinuität, vermindert bis vermehrt."],
+"reduziertes Schlafbedürfnis":["Deutlich verkürzter Schlaf ohne subjektive Müdigkeit am Folgetag."],
+"vegetative Begleitsymptome":["Körperliche Begleiterscheinungen wie Herzklopfen, Schwitzen, Schwindel oder Magen-Darm-Beschwerden."],
+"affektive Schwingungsfähigkeit":["Fähigkeit, im Gespräch affektiv auszulenken und auf Themenwechsel emotional mitzugehen."],
+"Affektreichtum":["Breite und Differenziertheit der gezeigten Gefühlsqualitäten."],
+"Affektlabilität":["Rascher, oft situationsgebundener Wechsel der Affektlage."],
+"Affektinkontinenz":["Affekte brechen bei geringem Anlass durch und lassen sich nicht mehr bremsen. Steigerungsform gegenüber der Affektlabilität."],
+"Affektverflachung":["Dauerhafte Verarmung der affektiven Ansprechbarkeit und Ausdrucksbreite."],
+"innere Unruhe":["Subjektives Getriebensein und Nichtabschaltenkönnen, auch ohne sichtbare motorische Unruhe."],
+"ängstlich":["Gefühl der Bedrohung mit Anspannung und Erwartungshaltung."],
+"traurig":["Gedrückte, niedergeschlagene Gefühlslage."],
+"gereizt":["Herabgesetzte Reizschwelle für Ärger und Missmut."],
+"wütend":["Deutlich ausgeprägter Ärgeraffekt mit Drang zur Entladung."],
+"Intentionalität":["Ausrichtung des Handelns auf Ziele: Absicht bilden, verfolgen und zu Ende bringen."],
+"Impulskontrolle":["Fähigkeit, Handlungsimpulse aufzuschieben oder zu unterdrücken."],
+"ambivalent":["Gegensätzliche Gefühle oder Bewertungen bestehen gleichzeitig nebeneinander, ohne sich aufzulösen. Die Blockade auf Handlungsebene heißt Ambitendenz."],
+"Craving":["Starkes, drängendes Verlangen nach einer Substanz oder einem Verhalten, das Aufmerksamkeit und Handlungsplanung bindet."],
+"Handeln wenig reflektiert und impulsgetrieben":["Handlungen folgen unmittelbar dem Impuls, Abwägung und Folgenabschätzung treten zurück.","P"],
+"Antrieb":["Energie, Initiative und Aktivitätsniveau. Antriebsarmut meint verminderte Energie, Antriebshemmung ein subjektives Gebremstsein bei erhaltenem Wollen."],
+"Freudempfinden":["Fähigkeit, Angenehmes als angenehm zu erleben; die Aufhebung entspricht der Anhedonie."],
+"euthym":["Ausgeglichene Stimmungslage ohne Auslenkung nach oben oder unten."],
+"gedrückt":["Anhaltend niedergeschlagene, herabgestimmte Stimmungslage."],
+"gehoben":["Anhaltend gehobene bis euphorische Stimmungslage, oft mit Selbstüberschätzung."],
+"Gefühl innerer Leere":["Erleben von Gefühllosigkeit und innerer Versteinerung, häufig als quälend beschrieben."],
+"moros":["Anhaltend mürrisch-gereizte, unzufriedene Grundstimmung."],
+"ratlos":["Die eigene Lage wird als unverständlich und nicht einordenbar erlebt."],
+"verzweifelt":["Ausweglosigkeitserleben mit hoffnungsloser Zukunftssicht."],
+"Illusionen":["Ein real vorhandener Sinnesreiz wird verkannt und umgedeutet."],
+"Pseudohalluzinationen":["Wahrnehmungsähnliches Erleben, dessen Unwirklichkeit die Person selbst erkennt. Die Abgrenzung zur Halluzination ist in der Literatur uneinheitlich.","U"],
+"Wahrnehmungsveränderungen":["Veränderte Wahrnehmung von Größe, Form, Farbe, Intensität oder Schärfe bei erhaltenem Realitätsbezug."],
+"dissoziatives Entfremdungserleben":["Eigene Person oder Umgebung werden als fremd, unwirklich oder verändert erlebt, bei erhaltener Realitätsprüfung."],
+"akustische Halluzinationen":["Hörwahrnehmung ohne entsprechenden äußeren Reiz."],
+"Akoasmen":["Ungeformte akustische Halluzinationen wie Klopfen, Rauschen oder Knacken."],
+"Stimmenhören":["Geformte akustische Halluzinationen in Gestalt von Stimmen."],
+"kommentierende Stimmen":["Stimmen begleiten Handeln oder Erleben mit Kommentaren."],
+"dialogisierende Stimmen":["Mehrere Stimmen sprechen miteinander, häufig über die betroffene Person."],
+"imperative Stimmen":["Stimmen erteilen Befehle. Wegen der Handlungsrelevanz stets Inhalt und Befolgungsdruck erfragen."],
+"visuelle Halluzinationen":["Sehwahrnehmung ohne entsprechenden äußeren Reiz."],
+"taktile Halluzinationen":["Berührungs- oder Hautempfindungen ohne äußeren Reiz."],
+"olfaktorische Halluzinationen":["Geruchswahrnehmung ohne äußeren Reiz."],
+"gustatorische Halluzinationen":["Geschmackswahrnehmung ohne äußeren Reiz."],
+"Zönästhesien":["Qualitativ fremdartige, schwer beschreibbare Leibmissempfindungen ohne erlebte äußere Verursachung."],
+"hypnagoge Halluzinationen":["Wahrnehmungserleben beim Einschlafen; kommt auch ohne Krankheitswert vor."],
+"hypnopompe Halluzinationen":["Wahrnehmungserleben beim Aufwachen; kommt auch ohne Krankheitswert vor."],
+"Gedankenentzug":["Eigene Gedanken werden als von außen weggenommen erlebt."],
+"Gedankenausbreitung":["Eigene Gedanken werden als für andere zugänglich oder hörbar erlebt."],
+"Gefühl des Gemachten":["Denken, Fühlen oder Handeln wird als von außen gesteuert erlebt; umfasst Gedankeneingebung und Willensbeeinflussung."],
+"pointierte bis wahnnahe Kognitionen":["Überzeugungen von großer subjektiver Sicherheit, die noch Restdistanz zulassen und die Wahnschwelle nicht erreichen."],
+"Wahnstimmung":["Unbestimmtes Vorfeld des Wahns: Gefühl, dass etwas Bedeutsames oder Bedrohliches im Gange sei, noch ohne benennbaren Inhalt."],
+"Wahneinfall":["Plötzlich auftretende wahnhafte Überzeugung ohne vorausgehende Wahrnehmung; eingliedriger Vorgang."],
+"Wahnwahrnehmung":["Einer real und richtig wahrgenommenen Gegebenheit wird eine wahnhafte, meist selbstbezogene Bedeutung zugeschrieben; zweigliedriger Vorgang."],
+"Wahngedanke":["Verfestigte, länger bestehende wahnhafte Überzeugung, häufig aus Wahneinfall oder Wahnwahrnehmung hervorgegangen."],
+"Thema: Bedrohung durch andere":["Wahninhalt kreist um Beeinträchtigung, Verfolgung oder Beobachtung durch andere."],
+"Thema: Negativität, Zukunftsangst, Selbstentwertung":["Wahninhalt kreist um Schuld, Verarmung, Versagen oder körperlichen Verfall."],
+"Thema: Selbstaufwertung":["Wahninhalt kreist um besondere Fähigkeiten, Sendung oder Bedeutung."],
+"Affektbeteiligung":["Ausmaß, in dem der Wahn affektiv besetzt ist und das Erleben antreibt; in der Literatur meist Wahndynamik genannt."],
+"Systematisierung":["Grad, in dem wahnhafte Inhalte zu einem in sich geschlossenen Gefüge verknüpft werden."],
+"synthym":["Wahninhalt und Grundstimmung passen zusammen."],
+"parathym":["Wahninhalt und Grundstimmung passen nicht zusammen."],
+"Konsum psychotroper Substanzen":["Aktueller Gebrauch psychisch wirksamer Substanzen; Art, Menge, Frequenz und letzter Konsum erfragen."],
+"regelmäßige nicht substanzgebundene, abhängigkeitserzeugende Handlungen":["Wiederholtes Verhalten mit Suchtcharakter ohne Substanz, etwa Glücksspiel oder exzessive Mediennutzung."],
+"Rausch":["Akute Intoxikation mit veränderter Bewusstseinslage, Steuerungsfähigkeit und Wahrnehmung."],
+"Toleranzentwicklung":["Zur gleichen Wirkung ist eine höhere Dosis nötig, bei gleicher Dosis lässt die Wirkung nach."],
+"Realängste":["Furcht vor tatsächlich bestehenden Bedrohungen, in Ausmaß und Anlass nachvollziehbar."],
+"isolierte Phobie":["Angst ist auf ein umschriebenes Objekt oder eine umschriebene Situation begrenzt."],
+"Panikattacken":["Anfallsartige, binnen Minuten kulminierende Angst mit ausgeprägter körperlicher Begleitsymptomatik."],
+"pathologische Sorgen":["Anhaltende, schwer kontrollierbare Sorgenketten über verschiedene Lebensbereiche."],
+"pathologische Ängste":["Ängste, die in Anlass, Ausmaß oder Dauer unangemessen sind und die Lebensführung einschränken."],
+"agoraphobische Ängste":["Angst vor Orten und Situationen, aus denen ein Entkommen schwierig oder Hilfe schwer erreichbar wäre."],
+"sozialphobische Ängste":["Angst vor prüfender Betrachtung und negativer Bewertung durch andere."],
+"Trennungsängste":["Angst vor Trennung von wichtigen Bezugspersonen."],
+"Zwangsgedanken":["Sich aufdrängende, als eigen erkannte und als unsinnig erlebte Gedanken, gegen die Widerstand geleistet wird."],
+"Zwangsimpulse":["Sich aufdrängende Handlungsimpulse, die als eigen erkannt und als fremdartig erlebt werden."],
+"Zwangshandlungen":["Wiederholt ausgeführte Handlungen oder Rituale, deren Unterlassen Anspannung auslöst."],
+"Selbstwert":["Bewertung der eigenen Person, vermindert bis überhöht."],
+"depressive Pseudodemenz":["Im Rahmen einer Depression imponierende kognitive Minderleistung, die einer demenziellen Entwicklung ähnelt und mit der Depression zurückgeht."],
+"gebremst":["Subjektives Erleben, im Denken und Handeln blockiert zu sein, bei erhaltenem Wollen."],
+"Gedankendrängen":["Erleben, von einer Vielzahl sich aufdrängender Gedanken bedrängt zu werden."],
+"doppelte Buchführung":["Wahnwelt und Alltagsrealität bestehen nebeneinander, ohne dass der Widerspruch wirksam wird."],
+"Ablehnung psychiatrisch erkannter Symptome und des vermittelten Krankheitsmodells":["Symptome oder deren Krankheitscharakter werden nicht als solche anerkannt; entspricht dem fehlenden Krankheitsgefühl und der fehlenden Krankheitseinsicht."],
+"Mangel an Schuldbewusstsein":["Folgen des eigenen Handelns für andere werden nicht als eigener Anteil anerkannt."],
+"keine intrinsische Therapiemotivation":["Behandlung wird auf äußeren Druck aufgenommen, nicht aus eigenem Anliegen."],
+"abnorme Gewohnheit":["Wiederkehrendes, schwer steuerbares Verhalten mit schädigendem Charakter."],
+"Fehlhandlungen":["Handlungen mit ungewolltem Schadenspotenzial, ohne zugrundeliegende Schädigungsabsicht."],
+"sachaggressives Verhalten":["Aggression richtet sich gegen Gegenstände."],
+"fremdaggressives Verhalten":["Aggression richtet sich gegen andere Personen."],
+"deviantes, nicht fremdaggressives Verhalten":["Normabweichendes Verhalten ohne Aggression gegen Personen."],
+"selbstverletzendes Verhalten":["Selbst zugefügte Gewebeschädigung ohne Sterbeabsicht, meist zur Spannungsregulation."],
+"parasuizidales Verhalten":["Selbstschädigendes Handeln mit unklarer, ambivalenter oder wechselnder Sterbeabsicht. Die Abgrenzung zum selbstverletzenden Verhalten liegt in der Intention, nicht in der Schwere."],
+"instrumentalisiert eingesetzte suizidale Äußerungen":["Suizidale Äußerungen werden erkennbar zur Beeinflussung des Gegenübers eingesetzt. Zurückhaltend zu verwenden: die Zuschreibung ist eine Interpretation und schließt reale Gefährdung nicht aus."],
+"zukunftsorientiert":["Es bestehen Pläne, Aufgaben oder Bindungen, die über den aktuellen Zustand hinausweisen; protektiv zu werten."],
+"Lebensüberdrussgedanken ohne Todeswunsch":["Das Leben wird als mühsam oder nicht mehr lohnend erlebt, ohne Wunsch zu sterben."],
+"Wunsch nach Ruhe":["Wunsch nach Unterbrechung des Weiterlebens, ohne dass ein Todeswunsch besteht."],
+"passiver Todeswunsch":["Wunsch, tot zu sein oder nicht mehr aufzuwachen, ohne Absicht zu eigenem Handeln."],
+"Suizidgedanken nach Dynamik, Akuizität und Handlungsdruck":["Suizidale Gedanken; zu beurteilen sind Häufigkeit und Aufdringlichkeit, Nähe zum Handeln und der erlebte Druck, ihnen zu folgen."],
+"Suizidintentionen":["Über Gedanken hinausgehende Absicht, mit Konkretisierung von Vorgehen, Ort oder Zeitpunkt."],
+"Lebenspaktfähigkeit":["Fähigkeit, eine tragfähige Absprache über Sicherheit einzugehen und einzuhalten; im Sprachgebrauch der Literatur Absprachefähigkeit.","P"],
+"kürzlich erfolgte suizidale Handlungen":["Zurückliegende suizidale Handlung in jüngerer Zeit, einschließlich abgebrochener Versuche."],
+"soziale Aktivität":["Umfang der Teilhabe an Kontakten, Aufgaben und Alltagsrollen."],
+"Handlungsbestimmung":["Ausmaß, in dem die Person ihr Handeln selbst bestimmt statt fremdbestimmt oder symptomgesteuert zu handeln.","P"],
+"Leid (selbst und Umgebung)":["Subjektiver Leidensdruck der Person und Belastung des Umfelds.","P"],
+"Folgeschäden (körperlich, sozial, Umgebung)":["Bereits eingetretene Schäden in Gesundheit, sozialer Stellung und Umfeld.","P"],
+"mitteilungsbereit":["Auskunftsbereitschaft ist gegeben, Fragen werden beantwortet."],
+"wortkarg":["Sparsame, knappe Antworten ohne eigene Ausführungen."],
+"mutistisch":["Ausbleiben sprachlicher Äußerung bei erhaltenem Sprachvermögen und wachem Bewusstsein."],
+"mitteilsam":["Ausführliches, von sich aus fortgesetztes Sprechen."]
+};
+
+const D = [
+{c:"W", n:"Basale psychische Funktionen", v:"var(--w)", k:[
+ {c:"W0", n:"Bewusstsein", it:[
+  {ty:"g", l:"Vigilanz", u:1, o:["wach","schläfrig","somnolent","soporös","komatös"]},
+  {ty:"g", l:"Bewusstseinsqualität", o:["bewusstseinsklar","bewusstseinsgetrübt","bewusstseinsgesteigert","bewusstseinseingeengt"], alt:{"bewusstseinsgesteigert":["bewusstseinsverschoben"]}}
+ ]},
+ {c:"W1", n:"Orientierung", it:[
+  {ty:"s", t:"zeitliche Orientierung", u:"zeitlich orientiert", d:"eingeschränkt"},
+  {ty:"s", t:"örtliche Orientierung", u:"örtlich orientiert", d:"eingeschränkt"},
+  {ty:"s", t:"situative Orientierung", u:"situativ orientiert", d:"eingeschränkt"},
+  {ty:"s", t:"autopersonelle Orientierung", u:"autopersonell orientiert", d:"eingeschränkt"}
+ ]},
+ {c:"W2", n:"Konzentration & Gedächtnis", it:[
+  {ty:"s", t:"Konzentration", d:"vermindert"},
+  {ty:"s", t:"Kurzzeitgedächtnis", d:"vermindert"},
+  {ty:"s", t:"Langzeitgedächtnis", d:"vermindert"},
+  {ty:"c", t:"Amnesie"},
+  {ty:"c", t:"Zeitgitterstörung", a:["Ekmnesie"]},
+  {ty:"c", t:"Erinnerungstäuschung", a:["Déjà-vu","False-memory-Syndrom"]},
+  {ty:"c", t:"Intrusionen", a:["Flashbacks"]},
+  {ty:"c", t:"Konfabulationen"}
+ ]},
+ {c:"W3", n:"Formales Denken", it:[
+  {ty:"s", t:"Auffassung", d:"vermindert"},
+  {ty:"s", t:"Abstraktion", d:"vermindert"},
+  {ty:"s", t:"Denkgeschwindigkeit", d:"verlangsamt", up:"beschleunigt"},
+  {ty:"s", t:"Einfalls- und Assoziationsreichtum", d:"vermindert", up:"gesteigert"},
+  {ty:"g", l:"Kohärenz", o:["kohärent","paralogisch","inkohärent","Schizophasie"]},
+  {ty:"c", t:"assoziativ gelockert"},{ty:"c", t:"sprunghaft"},{ty:"c", t:"Vorbeireden"},
+  {ty:"c", t:"weitschweifig", a:["umständlich"]},{ty:"c", t:"perseverierend", a:["haftend"]},
+  {ty:"c", t:"Grübeln"},{ty:"c", t:"eingeengt"},
+  {ty:"c", t:"Gedankenabreißen", a:["Gedankensperrung"]},
+  {ty:"c", t:"inhaltsleer", a:["unkonkret","vage","faselig","floskelhaft"]},
+  {ty:"c", t:"Neologismen", a:["Archaismen"]}
+ ]},
+ {c:"W4", n:"Psychomotorik", it:[
+  {ty:"s", t:"psychomotorische Geschwindigkeit", d:"verlangsamt", up:"beschleunigt"},
+  {ty:"c", t:"ausdrucksarm"},{ty:"c", t:"expressiv", a:["lebhaft","überexpressiv"]},
+  {ty:"c", t:"angespannt"},{ty:"c", t:"weinend", a:["weinerlich"]},
+  {ty:"c", t:"ambitendent"},{ty:"c", t:"unruhig", a:["agitiert"]},
+  {ty:"c", t:"wirkt abgelenkt"},{ty:"c", t:"Tics"},{ty:"c", t:"Manierismen"},
+  {ty:"c", t:"Verbigerationen"},{ty:"c", t:"Stereotypien"},{ty:"c", t:"Stupor"}
+ ]}
+]},
+{c:"X", n:"Kommunikation & Auftreten", v:"var(--x)", k:[
+ {c:"X0", n:"Erscheinung", it:[
+  {ty:"c", t:"ungepflegt", a:["verwahrlost"]},
+  {ty:"c", t:"für die Umgebung unpassend gekleidet"}
+ ]},
+ {c:"X1", n:"Kommunikationsverhalten", it:[
+  {ty:"g", l:"Mitteilsamkeit", o:["mitteilungsbereit","wortkarg","mutistisch","mitteilsam"],
+   alt:{"mutistisch":["submutistisch"],"mitteilsam":["gesprächig"]}},
+  {ty:"c", t:"Sprachbarriere"},{ty:"c", t:"Logorrhö"},
+  {ty:"c", t:"freundlich", a:["wohlwollend","warmherzig","angenehm"]},
+  {ty:"c", t:"zugewandt"},{ty:"c", t:"angepasst"},
+  {ty:"c", t:"fassadär", a:["dissimulierend","bagatellisierend","gekünstelt","unauthentisch"]},
+  {ty:"c", t:"Pseudologien", a:["Simulation","Aggravation"]},
+  {ty:"c", t:"klagsam", a:["jammerig"]},
+  {ty:"c", t:"überangepasst", a:["devot","unterwürfig"]},
+  {ty:"c", t:"theatralisch"},
+  {ty:"c", t:"überkontrolliert", a:["maskenhaft","steif","gezwungen"]},
+  {ty:"c", t:"leutselig", a:["jovial","gönnerhaft","kokett","großspurig"]},
+  {ty:"c", t:"distanzgemindert", a:["distanzlos"]},
+  {ty:"c", t:"herablassend", a:["abfällig","abschätzig","abwertend","verächtlich"]},
+  {ty:"c", t:"fordernd"},
+  {ty:"c", t:"initial freundlich, bei Wunschversagen fordernd und unfreundlich"},
+  {ty:"c", t:"abweisend", a:["distanziert","kühl","unfreundlich"]},
+  {ty:"c", t:"bedrohlich", a:["einschüchternd"]},
+  {ty:"c", t:"misstrauisch"},
+  {ty:"c", t:"oppositionell", a:["streitsüchtig","rachsüchtig","trotzig"]},
+  {ty:"c", t:"feindselig", a:["hasserfüllt"]},
+  {ty:"c", t:"eigentümlich"},{ty:"c", t:"läppisch"},
+  {ty:"c", t:"schüchtern", a:["unsicher","scheu"]},
+  {ty:"c", t:"teilnahmslos", a:["versonnen"]},
+  {ty:"c", t:"ausweichend"},
+  {ty:"c", t:"kein intuitives Gespür für angemessenen kommunikativen Umgang"},
+  {ty:"c", t:"soziopragmatische Agnosie"}
+ ]}
+]},
+{c:"Y", n:"Vitalität, Impulse, Affekte", v:"var(--y)", k:[
+ {c:"Y0", n:"Psychovegetativum", it:[
+  {ty:"s", t:"Hunger und Appetit", d:"vermindert", up:"gesteigert"},
+  {ty:"s", t:"Libido", d:"vermindert", up:"gesteigert"},
+  {ty:"s", t:"Schlaf", d:"vermindert", up:"vermehrt"},
+  {ty:"c", t:"reduziertes Schlafbedürfnis"},
+  {ty:"c", t:"vegetative Begleitsymptome"}
+ ]},
+ {c:"Y1", n:"Affekte & Impulse", it:[
+  {ty:"s", t:"affektive Schwingungsfähigkeit", d:"vermindert"},
+  {ty:"s", t:"Affektreichtum", d:"vermindert"},
+  {ty:"s", t:"Affektlabilität", up:"ausgeprägt", d:null},
+  {ty:"s", t:"Intentionalität", d:"vermindert"},
+  {ty:"s", t:"Impulskontrolle", d:"vermindert"},
+  {ty:"c", t:"Affektinkontinenz"},{ty:"c", t:"Affektverflachung"},
+  {ty:"c", t:"innere Unruhe"},{ty:"c", t:"ängstlich"},{ty:"c", t:"traurig"},
+  {ty:"c", t:"gereizt"},{ty:"c", t:"wütend"},{ty:"c", t:"ambivalent"},
+  {ty:"c", t:"Craving"},{ty:"c", t:"Handeln wenig reflektiert und impulsgetrieben"}
+ ]},
+ {c:"Y2", n:"Vitalität & Stimmung", it:[
+  {ty:"s", t:"Antrieb", d:"vermindert", up:"gesteigert"},
+  {ty:"s", t:"Freudempfinden", d:"vermindert"},
+  {ty:"g", l:"Stimmung", o:["euthym","gedrückt","gehoben"],
+   alt:{"euthym":["ausgeglichen"],"gedrückt":["niedergeschlagen","deprimiert"],"gehoben":["euphorisch","hyperthym"]}},
+  {ty:"c", t:"Gefühl innerer Leere", a:["Gefühl der Gefühllosigkeit"]},
+  {ty:"c", t:"moros", a:["übellaunig","dysphorisch"]},
+  {ty:"c", t:"ratlos"},{ty:"c", t:"verzweifelt", a:["hoffnungslos"]}
+ ]}
+]},
+{c:"Z", n:"Pathologische Interpretationen, Konditionierungen & Handlungen", v:"var(--z)", k:[
+ {c:"Z0", n:"Wahrnehmung", it:[
+  {ty:"c", t:"Illusionen"},{ty:"c", t:"Pseudohalluzinationen"},
+  {ty:"c", t:"Wahrnehmungsveränderungen", a:["Metamorphopsien","Mikropsie","Makropsie","Farbigsehen","Intensitätsveränderungen","Verschwommensehen"]},
+  {ty:"c", t:"dissoziatives Entfremdungserleben", a:["Depersonalisation","Derealisation","Jamais-vu","Transitivismus","Appersonierung"]},
+  {ty:"c", t:"akustische Halluzinationen"},{ty:"c", t:"Akoasmen"},{ty:"c", t:"Stimmenhören"},
+  {ty:"c", t:"kommentierende Stimmen"},{ty:"c", t:"dialogisierende Stimmen"},{ty:"c", t:"imperative Stimmen"},
+  {ty:"c", t:"visuelle Halluzinationen"},{ty:"c", t:"taktile Halluzinationen"},
+  {ty:"c", t:"olfaktorische Halluzinationen"},{ty:"c", t:"gustatorische Halluzinationen"},
+  {ty:"c", t:"Zönästhesien"},{ty:"c", t:"hypnagoge Halluzinationen"},{ty:"c", t:"hypnopompe Halluzinationen"}
+ ]},
+ {c:"Z1", n:"Inhaltliches Denken", it:[
+  {ty:"c", t:"Gedankenentzug"},
+  {ty:"c", t:"Gedankenausbreitung", a:["Gedankenlautwerden"]},
+  {ty:"c", t:"Gefühl des Gemachten", a:["Gedankeneingebung"]},
+  {ty:"c", t:"pointierte bis wahnnahe Kognitionen", a:["magisches Denken"]},
+  {ty:"c", t:"Wahnstimmung"},{ty:"c", t:"Wahneinfall"},{ty:"c", t:"Wahnwahrnehmung"},{ty:"c", t:"Wahngedanke"},
+  {ty:"c", t:"Thema: Bedrohung durch andere"},
+  {ty:"c", t:"Thema: Negativität, Zukunftsangst, Selbstentwertung"},
+  {ty:"c", t:"Thema: Selbstaufwertung"},
+  {ty:"s", t:"Affektbeteiligung", up:"ausgeprägt", d:null},
+  {ty:"g", l:"Affektqualität des Wahns", o:["synthym","parathym"]},
+  {ty:"s", t:"Systematisierung", up:"ausgeprägt", d:null}
+ ]},
+ {c:"Z2", n:"Abhängigkeitserzeugendes Verhalten", it:[
+  {ty:"c", t:"Konsum psychotroper Substanzen"},
+  {ty:"c", t:"regelmäßige nicht substanzgebundene, abhängigkeitserzeugende Handlungen"},
+  {ty:"c", t:"Rausch"},{ty:"c", t:"Toleranzentwicklung"}
+ ]},
+ {c:"Z3", n:"Ängste", it:[
+  {ty:"c", t:"Realängste"},{ty:"c", t:"isolierte Phobie"},
+  {ty:"c", t:"Panikattacken", a:["Angstattacken"]},
+  {ty:"c", t:"pathologische Sorgen"},{ty:"c", t:"pathologische Ängste"},
+  {ty:"c", t:"agoraphobische Ängste"},{ty:"c", t:"sozialphobische Ängste"},{ty:"c", t:"Trennungsängste"}
+ ]},
+ {c:"Z4", n:"Zwänge", it:[
+  {ty:"c", t:"Zwangsgedanken"},{ty:"c", t:"Zwangsimpulse"},{ty:"c", t:"Zwangshandlungen"}
+ ]},
+ {c:"Z5", n:"Selbstbewertung & Krankheitseinstellung", it:[
+  {ty:"s", t:"Selbstwert", d:"vermindert", up:"gesteigert"},
+  {ty:"c", t:"depressive Pseudodemenz"},
+  {ty:"c", t:"gebremst", a:["gehemmt"]},
+  {ty:"c", t:"Gedankendrängen"},{ty:"c", t:"doppelte Buchführung"},
+  {ty:"c", t:"Ablehnung psychiatrisch erkannter Symptome und des vermittelten Krankheitsmodells"},
+  {ty:"c", t:"Mangel an Schuldbewusstsein", a:["Mangel an Reue"]},
+  {ty:"c", t:"keine intrinsische Therapiemotivation", a:["fremdmotiviert"]}
+ ]},
+ {c:"Z6", n:"Eigen- & Fremdgefährdung", pflicht:1, risk:1,
+  norm:"keine Anhaltspunkte für Eigen- oder Fremdgefährdung erhoben", it:[
+  {ty:"c", t:"abnorme Gewohnheit"},{ty:"c", t:"Fehlhandlungen"},
+  {ty:"c", t:"sachaggressives Verhalten"},{ty:"c", t:"fremdaggressives Verhalten"},
+  {ty:"c", t:"deviantes, nicht fremdaggressives Verhalten"},
+  {ty:"c", t:"selbstverletzendes Verhalten"},{ty:"c", t:"parasuizidales Verhalten"},
+  {ty:"c", t:"instrumentalisiert eingesetzte suizidale Äußerungen"},
+  {ty:"c", t:"zukunftsorientiert", a:["zukunftszugewandt"]},
+  {ty:"c", t:"Lebensüberdrussgedanken ohne Todeswunsch"},
+  {ty:"c", t:"Wunsch nach Ruhe", a:["Wunsch nach Pause im Weiterleben"]},
+  {ty:"c", t:"passiver Todeswunsch"},
+  {ty:"s", t:"Suizidgedanken nach Dynamik, Akuizität und Handlungsdruck", up:"ausgeprägt", d:null},
+  {ty:"s", t:"Suizidintentionen", up:"ausgeprägt", d:null},
+  {ty:"s", t:"Lebenspaktfähigkeit", d:"eingeschränkt"},
+  {ty:"c", t:"kürzlich erfolgte suizidale Handlungen"}
+ ]},
+ {c:"GP", n:"Globalparameter", it:[
+  {ty:"s", t:"soziale Aktivität", d:"vermindert", up:"gesteigert"},
+  {ty:"s", t:"Handlungsbestimmung", d:"vermindert"},
+  {ty:"s", t:"Leid (selbst und Umgebung)", up:"ausgeprägt", d:null},
+  {ty:"s", t:"Folgeschäden (körperlich, sozial, Umgebung)", up:"ausgeprägt", d:null}
+ ]}
+]}
+];
+
+
+
+const S = {}, NZ = {};
+let mitLeer = false;
+const key = (kc, i) => kc + "_" + i;
+
+const app = document.getElementById("app");
+D.forEach(cl => {
+  const ch = document.createElement("div");
+  ch.className = "clusterhead";
+  ch.textContent = cl.c + " — " + cl.n;
+  app.appendChild(ch);
+  cl.k.forEach(kat => {
+    const sec = document.createElement("section");
+    sec.className = "card"; sec.id = "sec_" + kat.c;
+    const ib = t => DEF[t] ? '<button class="ib" type="button" aria-pressed="false" data-def="' +
+      t.replace(/"/g, "&quot;") + '" title="Kurzdefinition">i</button>' : "";
+    let b = "", pills = "";
+    kat.it.forEach((it, i) => {
+      const k = key(kat.c, i);
+      if (it.ty === "c") {
+        S[k] = -1;
+        pills += '<button class="pill' + (kat.risk ? ' risk' : '') + '" type="button" aria-pressed="false" data-k="' + k + '">' +
+          it.t + (it.a ? '<span class="alt">&asymp;' + it.a.length + '</span>' : '') + '</button>' + ib(it.t);
+      } else if (it.ty === "s") {
+        S[k] = null;
+        let lv = '<button class="lvl" type="button" aria-pressed="false" data-k="' + k + '" data-v="u">U</button>';
+        if (it.d !== null) lv += [1,2,3].map(n => '<button class="lvl" type="button" aria-pressed="false" data-k="' + k +
+          '" data-v="-' + n + '">' + "\u2193".repeat(n) + '</button>').join("");
+        if (it.up) lv += [1,2,3].map(n => '<button class="lvl" type="button" aria-pressed="false" data-k="' + k +
+          '" data-v="' + n + '">' + "\u2191".repeat(n) + '</button>').join("");
+        b += '<div class="scale"><span class="n">' + it.t + '</span>' + ib(it.t) + lv + '</div>';
+      } else {
+        S[k] = null;
+        b += '<div class="grplabel">' + it.l + '</div><div class="pills">' +
+          it.o.map(o => '<button class="pill" type="button" aria-pressed="false" data-k="' + k + '" data-o="' + o + '">' +
+            o + (it.alt && it.alt[o] ? '<span class="alt">&asymp;' + it.alt[o].length + '</span>' : '') +
+            '</button>' + ib(o)).join("") + '</div>';
+      }
+    });
+    if (pills) b += '<div class="pills">' + pills + '</div>';
+    b += '<div class="defbox"></div><label for="nz_' + kat.c + '">Notizen</label>' +
+         '<input type="text" id="nz_' + kat.c + '" data-nz="' + kat.c + '">';
+    sec.innerHTML = '<h2><span class="idx">' + kat.c + '</span>' + kat.n +
+      '<span class="count" id="cnt_' + kat.c + '" hidden>0</span><span class="chev">&#9654;</span></h2>' +
+      '<div class="body">' + b + '</div>';
+    app.appendChild(sec);
+  });
+});
+
+function findItem(k){
+  const kc = k.split("_")[0], i = +k.split("_")[1];
+  for (const cl of D) for (const kat of cl.k) if (kat.c === kc) return kat.it[i];
+}
+
+app.addEventListener("click", e => {
+  const h2 = e.target.closest("h2");
+  if (h2) { h2.parentElement.classList.toggle("open"); return; }
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.classList.contains("ib")) {
+    const box = b.closest("section").querySelector(".defbox");
+    const offen = b.getAttribute("aria-pressed") === "true";
+    b.closest("section").querySelectorAll(".ib").forEach(x => x.setAttribute("aria-pressed", "false"));
+    const ed = DEF[b.dataset.def];
+    const zus = ed[1] === "P" ? '<br><em>Begriff des PPB3, dort verbindlich definiert.</em>'
+      : ed[1] === "U" ? '<br><em>Begriffsverwendung in der Literatur uneinheitlich.</em>' : "";
+    box.innerHTML = offen ? "" : '<div class="note' + (ed[1] ? ' flag' : '') + '"><b>' +
+      b.dataset.def + '</b>' + ed[0] + zus + '</div>';
+    if (!offen) b.setAttribute("aria-pressed", "true");
+    return;
+  }
+  const k = b.dataset.k; if (!k) return;
+  const it = findItem(k);
+  if (b.classList.contains("lvl")) {
+    S[k] = (S[k] === b.dataset.v) ? null : b.dataset.v;
+    b.parentElement.querySelectorAll(".lvl").forEach(x =>
+      x.setAttribute("aria-pressed", x.dataset.v === S[k] ? "true" : "false"));
+  } else if (it.ty === "g") {
+    const o = b.dataset.o, alts = (it.alt && it.alt[o]) || [], cur = S[k];
+    if (!cur || cur.o !== o) S[k] = {o:o, i:0};
+    else if (cur.i < alts.length) S[k] = {o:o, i:cur.i + 1};
+    else S[k] = null;
+    b.parentElement.querySelectorAll(".pill").forEach(x => {
+      x.setAttribute("aria-pressed", "false");
+      const oo = x.dataset.o, aa = (it.alt && it.alt[oo]) || [];
+      x.firstChild.textContent = oo;
+      if (aa.length) x.title = "erneut tippen: " + aa.join(", ");
+    });
+    if (S[k]) { b.setAttribute("aria-pressed", "true"); b.firstChild.textContent = S[k].i ? alts[S[k].i - 1] : o; }
+  } else {
+    const alts = it.a || [];
+    S[k] = (S[k] >= alts.length) ? -1 : S[k] + 1;
+    b.setAttribute("aria-pressed", S[k] >= 0 ? "true" : "false");
+    b.firstChild.textContent = S[k] > 0 ? alts[S[k] - 1] : it.t;
+    if (alts.length) b.title = "erneut tippen: " + alts.join(", ");
+  }
+  render();
+});
+
+document.getElementById("colIn").addEventListener("input", e => {
+  if (e.target.dataset.nz) NZ[e.target.dataset.nz] = e.target.value.trim();
+  render();
+});
+
+function teile(kat){
+  const out = [];
+  kat.it.forEach((it, i) => {
+    const s = S[key(kat.c, i)];
+    if (it.ty === "c") { if (s >= 0) out.push(s > 0 ? it.a[s - 1] : it.t); }
+    else if (it.ty === "g") { if (s) out.push(s.i ? it.alt[s.o][s.i - 1] : s.o); }
+    else if (it.ty === "s" && s) {
+      if (s === "u") out.push(it.u || (it.t + " unauffällig"));
+      else out.push(it.t + " " + G[Math.abs(+s)] + " " + (+s < 0 ? it.d : it.up));
+    }
+  });
+  if (NZ[kat.c]) out.push(NZ[kat.c]);
+  return out;
+}
+
+function kopf(){
+  const p = document.getElementById("pid").value.trim();
+  const v = document.getElementById("von").value.trim();
+  const d = document.getElementById("datum").value;
+  return "Psychopathologischer Befund" + (d ? " vom " + d.split("-").reverse().join(".") : "") +
+    (p ? " — " + p : "") + (v ? " — erhoben von " + v : "");
+}
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+function render(){
+  let doc = "", liste = "", txt = kopf() + "\n", ltxt = txt, beurteilt = 0, gesamt = 0;
+  D.forEach(cl => {
+    const saetze = [];
+    cl.k.forEach(kat => {
+      gesamt++;
+      const t = teile(kat);
+      const c = document.getElementById("cnt_" + kat.c);
+      c.hidden = !t.length; c.textContent = t.length;
+      c.className = "count" + (kat.risk && t.length ? " alert" : "");
+      if (t.length) beurteilt++;
+      if (!t.length && !mitLeer && !kat.pflicht) return;
+      saetze.push(kat.n + ": " + (t.length ? t.join(", ") : (kat.norm || "unauffällig")) + ".");
+    });
+    if (!saetze.length) return;
+    doc += "<h3>" + esc(cl.c + " — " + cl.n) + "</h3><p>" + esc(saetze.join(" ")) + "</p>";
+    liste += "<h3>" + esc(cl.c + " — " + cl.n) + "</h3><ul>" +
+      saetze.map(s => "<li>" + esc(s) + "</li>").join("") + "</ul>";
+    txt += "\n" + saetze.join(" ") + "\n";
+    ltxt += "\n" + cl.c + " — " + cl.n + "\n" + saetze.map(s => "• " + s).join("\n") + "\n";
+  });
+  document.getElementById("docOut").innerHTML = doc || '<p class="empty">Noch keine Auswahl getroffen.</p>';
+  document.getElementById("listeOut").innerHTML = liste || '<p class="empty">Noch keine Auswahl getroffen.</p>';
+  document.getElementById("mtxt").textContent = beurteilt + " von " + gesamt + " Kategorien";
+  document.getElementById("mbar").style.width = (beurteilt / gesamt * 100) + "%";
+  window.__txt = {doc:txt, liste:ltxt};
+}
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t ? "true" : "false"));
+  document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + t.dataset.pane));
+}));
+
+function toast(m){
+  const t = document.getElementById("toast");
+  t.textContent = m; t.classList.add("on");
+  setTimeout(() => t.classList.remove("on"), 2200);
+}
+
+document.getElementById("btnCopy").addEventListener("click", async () => {
+  const pane = document.querySelector('.tab[aria-selected="true"]').dataset.pane;
+  const s = window.__txt[pane];
+  try { await navigator.clipboard.writeText(s); toast("Befundtext kopiert"); }
+  catch (err) {
+    const r = document.createRange();
+    r.selectNodeContents(document.getElementById(pane === "doc" ? "docOut" : "listeOut"));
+    getSelection().removeAllRanges(); getSelection().addRange(r);
+    toast("Markiert — mit Strg oder Cmd und C kopieren");
+  }
+});
+document.getElementById("btnLeer").addEventListener("click", e => {
+  mitLeer = !mitLeer; e.currentTarget.setAttribute("aria-pressed", mitLeer ? "true" : "false"); render();
+});
+document.getElementById("btnAlle").addEventListener("click", e => {
+  const auf = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  document.querySelectorAll("#app .card").forEach(c => c.classList.toggle("open", auf));
+  e.currentTarget.setAttribute("aria-pressed", auf ? "true" : "false");
+  e.currentTarget.textContent = auf ? "Alle Karten schließen" : "Alle Karten öffnen";
+});
+document.getElementById("btnPrint").addEventListener("click", () => window.print());
+document.getElementById("btnReset").addEventListener("click", () => {
+  if (confirm("Alle Eingaben verwerfen?")) location.reload();
+});
+
+document.getElementById("datum").valueAsDate = new Date();
+document.querySelector("#app .card").classList.add("open");
+render();
+
+/* ---------- PWA ---------- */
+(function(){
+  const basis = location.href.replace(/[^\/]*$/, "");
+  if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register(basis + "sw.js", {scope: basis}).catch(() => {});
+    });
+  }
+
+  const btn = document.getElementById("btnInstall");
+  let prompt = null;
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault(); prompt = e; btn.hidden = false;
+  });
+  window.addEventListener("appinstalled", () => { btn.hidden = true; toast("App installiert"); });
+
+  const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (iOS && !standalone) { btn.hidden = false; btn.textContent = "Zum Home-Bildschirm"; }
+
+  btn.addEventListener("click", async () => {
+    if (prompt) { prompt.prompt(); await prompt.userChoice; prompt = null; btn.hidden = true; return; }
+    if (iOS) { alert("In Safari unten auf das Teilen-Symbol tippen, dann „Zum Home-Bildschirm“ wählen."); return; }
+    alert("Installieren über das Menü des Browsers: „Diese Seite als App installieren“ (Chrome, Edge).");
+  });
+})();
+</script>
+</body>
+</html>
